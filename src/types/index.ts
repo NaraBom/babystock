@@ -49,8 +49,6 @@ export const CATEGORY_EMOJIS: Record<string, string[]> = {
   기타: ['🧆', '🥛', '🧀', '🍯', '🧂', '☕', '🧃', '🥤', '🍼', '🧈', '🧁', '🍩', '🎂', '🍪', '🥧'],
 };
 
-export const FOOD_EMOJIS = Object.values(CATEGORY_EMOJIS).flat();
-
 export const COLOR_TAGS = [
   '#E8734A', '#A8C97F', '#7BAFD4', '#F4C430', '#C47AC0',
   '#E87D7D', '#5BBF8E', '#F0A06A', '#6B8E6B', '#A0785A',
