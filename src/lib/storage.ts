@@ -1,8 +1,8 @@
 import { Cube, ConsumptionLog } from '@/types';
 
-const CUBES_KEY = 'babystock_cubes';
-const LOGS_KEY = 'babystock_logs';
-const SETTINGS_KEY = 'babystock_settings';
+const CUBES_KEY = 'cubridge_cubes';
+const LOGS_KEY = 'cubridge_logs';
+const SETTINGS_KEY = 'cubridge_settings';
 
 export interface AppSettings {
   expiryWarningDays: number;       // 유통기한 임박 기준일

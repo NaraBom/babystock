@@ -92,7 +92,7 @@ export default function SettingsPage() {
     setPushStatus(result as typeof pushStatus);
     if (result === 'granted') {
       updateSetting('pushNotification', true);
-      new Notification('BabyStock 알림 활성화 🍼', { body: '재고 부족 시 알림을 받을 수 있어요!' });
+      new Notification('Cubridge 알림 활성화 🍼', { body: '재고 부족 시 알림을 받을 수 있어요!' });
     }
   }
 
@@ -117,7 +117,7 @@ export default function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `babystock_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `cubridge_backup_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -270,7 +270,7 @@ export default function SettingsPage() {
 
       {/* 앱 정보 */}
       <div className="mt-6 text-center text-xs text-gray-300">
-        BabyStock v1.0 · 로컬 저장 모드
+        Cubridge v1.0 · 로컬 저장 모드
       </div>
 
       {confirmType === 'reset' && (

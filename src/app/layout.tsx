@@ -4,7 +4,7 @@ import Sidebar from '@/components/Sidebar';
 import BottomNav from '@/components/BottomNav';
 
 export const metadata: Metadata = {
-  title: 'BabyStock - 이유식 큐브 재고 관리',
+  title: 'Cubridge - 이유식 큐브 재고 관리',
   description: '이유식 큐브 재고를 한눈에 관리하는 스마트 재고 트래커',
 };
 
