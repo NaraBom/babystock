@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Cube, ConsumptionLog } from '@/types';
 import { getCubes, getLogs, addLog, deleteLog, deleteCube } from '@/lib/storage';
 import { Plus } from 'lucide-react';
@@ -17,8 +17,8 @@ function toDateKey(date: Date) {
 }
 
 export default function LogsPage() {
-  const [cubes, setCubes] = useState<Cube[]>([]);
-  const [logs, setLogs] = useState<ConsumptionLog[]>([]);
+  const [cubes, setCubes] = useState<Cube[]>(() => getCubes());
+  const [logs, setLogs] = useState<ConsumptionLog[]>(() => getLogs());
 
   const today = new Date();
   const todayKey = toDateKey(today);
@@ -32,15 +32,10 @@ export default function LogsPage() {
   const [form, setForm] = useState({
     error: null as string | null,
     date: todayKey,
-    time: '12:00',
+    time: new Date().toTimeString().slice(0, 5),
     notes: '',
     entries: [{ id: crypto.randomUUID(), cubeId: '', quantity: 1 }] as LogEntry[],
   });
-
-  useEffect(() => {
-    setCubes(getCubes());
-    setLogs(getLogs());
-  }, []);
 
   const logsByDate = useMemo(() => {
     const map: Record<string, ConsumptionLog[]> = {};
@@ -100,7 +95,7 @@ export default function LogsPage() {
   }
 
   function openForm() {
-    setForm({ error: null, date: selectedDate, time: '12:00', notes: '', entries: [{ id: crypto.randomUUID(), cubeId: '', quantity: 1 }] });
+    setForm({ error: null, date: selectedDate, time: new Date().toTimeString().slice(0, 5), notes: '', entries: [{ id: crypto.randomUUID(), cubeId: '', quantity: 1 }] });
     setShowForm(true);
   }
 
@@ -109,9 +104,9 @@ export default function LogsPage() {
 
     const hour = parseInt(form.time.split(':')[0]);
     let mealTime: MealTime = 'snack';
-    if (hour >= 6 && hour < 10) mealTime = 'breakfast';
-    else if (hour >= 11 && hour < 14) mealTime = 'lunch';
-    else if (hour >= 17 && hour < 21) mealTime = 'dinner';
+    if (hour >= 6 && hour < 9) mealTime = 'breakfast';
+    else if (hour >= 10 && hour < 13) mealTime = 'lunch';
+    else if (hour >= 14 && hour < 17) mealTime = 'dinner';
     const loggedAt = new Date(`${form.date}T${form.time}:00`).toISOString();
 
     const totalByCube = new Map<string, number>();

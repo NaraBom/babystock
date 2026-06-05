@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Box, BookOpen, BarChart2, Settings } from 'lucide-react';
+import BabyCard from '@/components/BabyCard';
 
 const NAV_ITEMS = [
   { href: '/', label: '대시보드', icon: LayoutDashboard },
@@ -38,6 +39,8 @@ export default function Sidebar() {
         <span className="text-2xl">🍼</span>
         <span className="ml-2 font-bold text-lg text-[var(--primary)]">Cubridge</span>
       </Link>
+
+      <BabyCard />
 
       <nav className="flex flex-col gap-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => navLink(href, label, Icon))}

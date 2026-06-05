@@ -1,6 +1,7 @@
 ﻿'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import type * as ExcelJS from 'exceljs';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Cube, CATEGORIES, getStockStatus } from '@/types';
 import { getCubes, deleteCube, getSettings } from '@/lib/storage';
@@ -16,15 +17,11 @@ const STATUS_FILTERS = [
 ];
 
 export default function CubesPage() {
-  const [cubes, setCubes] = useState<Cube[]>([]);
+  const [cubes, setCubes] = useState<Cube[]>(() => getCubes());
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showDeleteZero, setShowDeleteZero] = useState(false);
   const expiryWarningDays = getSettings().expiryWarningDays;
-
-  useEffect(() => {
-    setCubes(getCubes());
-  }, []);
 
   function refresh() {
     setCubes(getCubes());
@@ -55,7 +52,7 @@ export default function CubesPage() {
     ];
 
     // 헤더 스타일
-    const headerStyle: ExcelJS.Style = {
+    const headerStyle = {
       font: { bold: true, color: { argb: 'FFFFFFFF' } },
       fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8734A' } },
       alignment: { horizontal: 'center', vertical: 'middle' },
@@ -66,7 +63,7 @@ export default function CubesPage() {
         right:  { style: 'thin', color: { argb: 'FF000000' } },
       },
     };
-    ws.getRow(1).eachCell((cell) => { cell.style = headerStyle; });
+    ws.getRow(1).eachCell((cell) => { cell.style = headerStyle as ExcelJS.Style; });
     ws.getRow(1).height = 22;
     ws.views = [{ state: 'frozen', ySplit: 1 }];
 
@@ -89,16 +86,16 @@ export default function CubesPage() {
     });
 
     // 셀 스타일 (데이터 행)
-    const cellBorder: ExcelJS.Borders = {
-      top:    { style: 'thin', color: { argb: 'FF000000' } },
-      bottom: { style: 'thin', color: { argb: 'FF000000' } },
-      left:   { style: 'thin', color: { argb: 'FF000000' } },
-      right:  { style: 'thin', color: { argb: 'FF000000' } },
+    const cellBorder = {
+      top:    { style: 'thin' as const, color: { argb: 'FF000000' } },
+      bottom: { style: 'thin' as const, color: { argb: 'FF000000' } },
+      left:   { style: 'thin' as const, color: { argb: 'FF000000' } },
+      right:  { style: 'thin' as const, color: { argb: 'FF000000' } },
     };
     ws.eachRow((row, rowNum) => {
       if (rowNum === 1) return;
       row.eachCell((cell, colNum) => {
-        cell.border = cellBorder;
+        cell.border = cellBorder as ExcelJS.Borders;
         cell.alignment = { vertical: 'middle', horizontal: colNum <= 2 ? 'left' : 'center' };
         // 상태 셀 색상
         if (colNum === 6) {
@@ -121,7 +118,7 @@ export default function CubesPage() {
           ws.mergeCells(mergeStart, 1, mergeEnd, 1);
           const mergedCell = ws.getCell(mergeStart, 1);
           mergedCell.alignment = { vertical: 'middle', horizontal: 'center' };
-          mergedCell.border = cellBorder;
+          mergedCell.border = cellBorder as ExcelJS.Borders;
         }
         mergeStart = rowNum;
         currentCat = c.category;

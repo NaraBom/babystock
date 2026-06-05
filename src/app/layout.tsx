@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
+import { Jua } from 'next/font/google';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import BottomNav from '@/components/BottomNav';
+import MobileBabyBar from '@/components/MobileBabyBar';
+
+const jua = Jua({ subsets: ['latin'], weight: '400' });
 
 export const metadata: Metadata = {
   title: 'Cubridge - 이유식 큐브 재고 관리',
@@ -11,15 +15,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" className="h-full">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
-      </head>
-      <body className="min-h-full bg-[var(--background)]">
+      <body className={`${jua.className} min-h-full bg-[var(--background)]`}>
         <div className="flex min-h-screen">
           <Sidebar />
           <main className="flex-1 pb-20 md:pb-0 overflow-auto">
+            <MobileBabyBar />
             {children}
           </main>
         </div>

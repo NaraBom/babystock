@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { AppSettings, getSettings, saveSettings, clearAllData, getCubes, getSampleCubes, addCube, saveCubes, saveLogs } from '@/lib/storage';
+import { useState } from 'react';
+import { AppSettings, getSettings, saveSettings, clearAllData, getCubes, getSampleCubes, addCube, saveCubes } from '@/lib/storage';
 import { Bell, CalendarClock, Package, RotateCcw, Trash2, ChevronRight, Check } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
 
@@ -12,7 +12,12 @@ type DraftKey = 'expiryWarningDays' | 'defaultWarningThreshold' | 'defaultDanger
 export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings>(getSettings());
   const [saved, setSaved] = useState(false);
-  const [pushStatus, setPushStatus] = useState<'default' | 'granted' | 'denied'>('default');
+  const [pushStatus, setPushStatus] = useState<'default' | 'granted' | 'denied'>(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission as 'default' | 'granted' | 'denied';
+    }
+    return 'default';
+  });
   const [confirmType, setConfirmType] = useState<ConfirmType>(null);
   const [pushError, setPushError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Record<DraftKey, string>>(() => {
@@ -24,20 +29,6 @@ export default function SettingsPage() {
       defaultGramsPerCube: String(s.defaultGramsPerCube),
     };
   });
-
-  useEffect(() => {
-    const s = getSettings();
-    setSettings(s);
-    setDraft({
-      expiryWarningDays: String(s.expiryWarningDays),
-      defaultWarningThreshold: String(s.defaultWarningThreshold),
-      defaultDangerThreshold: String(s.defaultDangerThreshold),
-      defaultGramsPerCube: String(s.defaultGramsPerCube),
-    });
-    if ('Notification' in window) {
-      setPushStatus(Notification.permission as typeof pushStatus);
-    }
-  }, []);
 
   function handleNumberChange(key: DraftKey, raw: string) {
     const cleaned = raw.replace(/^0+(\d)/, '$1');

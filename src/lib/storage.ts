@@ -3,6 +3,31 @@ import { Cube, ConsumptionLog } from '@/types';
 const CUBES_KEY = 'cubridge_cubes';
 const LOGS_KEY = 'cubridge_logs';
 const SETTINGS_KEY = 'cubridge_settings';
+const BABY_KEY = 'cubridge_baby';
+
+export interface BabyProfile {
+  name: string;
+  birthDate: string | null; // 'YYYY-MM-DD'
+  emoji: string;
+  photoUrl: string | null;  // base64 data URL
+  memo: string;
+}
+
+const DEFAULT_BABY: BabyProfile = { name: '', birthDate: null, emoji: '👶', photoUrl: null, memo: '' };
+
+export function getBabyProfile(): BabyProfile {
+  if (!isBrowser()) return DEFAULT_BABY;
+  try {
+    return { ...DEFAULT_BABY, ...JSON.parse(localStorage.getItem(BABY_KEY) || '{}') };
+  } catch {
+    return DEFAULT_BABY;
+  }
+}
+
+export function saveBabyProfile(profile: BabyProfile) {
+  if (!isBrowser()) return;
+  localStorage.setItem(BABY_KEY, JSON.stringify(profile));
+}
 
 export interface AppSettings {
   expiryWarningDays: number;       // 유통기한 임박 기준일
@@ -16,7 +41,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   expiryWarningDays: 3,
   defaultWarningThreshold: 5,
   defaultDangerThreshold: 2,
-  defaultGramsPerCube: 30,
+  defaultGramsPerCube: 20,
   pushNotification: false,
 };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 
 interface Props {
   value: string | null;           // 'YYYY-MM-DD' 또는 null
@@ -20,12 +20,14 @@ export default function DateInput({ value, onChange, onWarnChange, className = '
 
   const [local, setLocal] = useState(() => parse(value));
   const [warn, setWarn] = useState(false);
+  const [prevValue, setPrevValue] = useState(value);
   const monthRef = useRef<HTMLInputElement>(null);
   const dayRef   = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  if (prevValue !== value) {
+    setPrevValue(value);
     setLocal(parse(value));
-  }, [value]);
+  }
 
   function validate(next: { yyyy: string; mm: string; dd: string }) {
     const { yyyy, mm, dd } = next;
