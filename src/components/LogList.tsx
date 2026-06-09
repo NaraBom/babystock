@@ -94,7 +94,7 @@ export default function LogList({ selectedLogs, selectedDateLabel, cubes, onAddC
                   </span>
                   <span className="w-2 h-2 rounded-full bg-[var(--primary)] flex-shrink-0" />
                   <span className="font-semibold text-gray-800">{log.cube_name}</span>
-                  <span className="text-xs text-gray-400">{cubes.find((c) => c.id === log.cube_id)?.grams_per_cube ?? ''}g</span>
+                  {(() => { const g = log.grams_override ?? cubes.find((c) => c.id === log.cube_id)?.grams_per_cube; return g != null ? <span className="text-xs text-gray-400">{g}g</span> : null; })()}
                   <ReactionBadge log={log} onChange={(r) => onReactionChange(log, r)} />
                   {log.notes && (
                     <span className="text-xs text-gray-400 truncate max-w-32">{log.notes}</span>

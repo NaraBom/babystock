@@ -45,15 +45,19 @@ export default function DashboardPage() {
   const todayLogs = logs.filter((l) => new Date(l.logged_at).toDateString() === today);
   const todayTotal = todayLogs.reduce((sum, l) => sum + l.quantity, 0);
   // 가장 최근 식사 세션 (아침/점심/저녁 중 마지막 1개)
+  function toLocalDateKey(iso: string) {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
   const mealLogs = logs.filter((l) => l.meal_time !== 'snack');
   const lastMeal = (() => {
     if (mealLogs.length === 0) return null;
     const latest = mealLogs.reduce((a, b) =>
       new Date(a.logged_at) > new Date(b.logged_at) ? a : b
     );
-    const date = latest.logged_at.slice(0, 10);
+    const date = toLocalDateKey(latest.logged_at);
     const mealTime = latest.meal_time;
-    return { mealTime, date, items: mealLogs.filter((l) => l.logged_at.startsWith(date) && l.meal_time === mealTime) };
+    return { mealTime, date, items: mealLogs.filter((l) => toLocalDateKey(l.logged_at) === date && l.meal_time === mealTime) };
   })();
 
   // 카테고리별 큐브 수 (전체 큐브 카드용)
