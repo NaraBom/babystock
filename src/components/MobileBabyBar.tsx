@@ -8,14 +8,37 @@ function getAgeMonths(birthDate: string | null): string | null {
   if (!birthDate) return null;
   const birth = new Date(birthDate);
   const now = new Date();
-  const months =
-    (now.getFullYear() - birth.getFullYear()) * 12 +
-    (now.getMonth() - birth.getMonth());
-  if (months < 0) return null;
-  if (months < 24) return `${months}개월`;
-  const years = Math.floor(months / 12);
-  const rem = months % 12;
-  return rem === 0 ? `${years}세` : `${years}세 ${rem}개월`;
+  if (now < birth) return null;
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const totalDays = Math.floor((now.getTime() - birth.getTime()) / msPerDay) + 1;
+
+  let years = now.getFullYear() - birth.getFullYear();
+  let months = now.getMonth() - birth.getMonth();
+  let days = now.getDate() - birth.getDate();
+
+  if (days < 0) {
+    months -= 1;
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  const d = days + 1;
+  const totalMonths = years * 12 + months;
+
+  let detail: string;
+  if (totalMonths < 24) {
+    detail = `${totalMonths}개월 ${d}일`;
+  } else {
+    const remMonths = months;
+    detail = remMonths === 0 ? `${years}세 ${d}일` : `${years}세 ${remMonths}개월 ${d}일`;
+  }
+
+  return `D+${totalDays} (${detail})`;
 }
 
 function Avatar({ profile }: { profile: BabyProfile }) {
@@ -39,7 +62,16 @@ export default function MobileBabyBar() {
 
   return (
     <div className="md:hidden">
-      {/* 탑바 */}
+      {/* 앱 로고 헤더 */}
+      <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white border-b border-[var(--border)]">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+          <polygon points="14,3 25,9 14,15 3,9" fill="#F4A460"/>
+          <polygon points="3,9 14,15 14,25 3,19" fill="#E8734A"/>
+          <polygon points="25,9 14,15 14,25 25,19" fill="#C4522A"/>
+        </svg>
+        <span className="font-bold text-base text-[var(--primary)]">Cubridge</span>
+      </div>
+      {/* 아기 정보 탑바 */}
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-2.5 px-4 py-2.5 bg-orange-50 border-b border-orange-100"

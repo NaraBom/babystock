@@ -310,6 +310,7 @@ export default function SchedulePage() {
     return `${start.getFullYear()}년 ${start.getMonth() + 1}월 ${weekOfMonth}주`;
   })();
 
+  const [selectedDate, setSelectedDate] = useState<string>(() => toDateKey(new Date()));
   const editingPlan = editing ? getPlan(editing.date, editing.meal_time) : undefined;
 
   return (
@@ -341,8 +342,98 @@ export default function SchedulePage() {
         </button>
       </div>
 
-      {/* 그리드 */}
-      <div className="overflow-x-auto">
+      {/* 모바일: 날짜 탭 + 하루 세로 목록 */}
+      <div className="sm:hidden">
+        <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+          {weekDates.map((date, i) => {
+            const key = toDateKey(date);
+            const isToday = isSameDay(date, today);
+            const weekday = date.getDay();
+            const isRed = weekday === 0 || isHoliday(key, holidays);
+            const isBlue = !isRed && weekday === 6;
+            const isSelected = key === selectedDate;
+            return (
+              <button
+                key={key}
+                onClick={() => setSelectedDate(key)}
+                className={`flex flex-col items-center px-3 py-1.5 rounded-xl flex-shrink-0 border transition ${
+                  isSelected ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'bg-white border-[var(--border)] hover:bg-orange-50'
+                }`}
+              >
+                <span className={`text-[10px] ${isSelected ? 'text-white/80' : isRed ? 'text-red-400' : isBlue ? 'text-blue-400' : 'text-gray-400'}`}>
+                  {DAY_LABELS[i]}
+                </span>
+                <span className={`text-sm font-bold ${isSelected ? 'text-white' : isToday ? 'text-[var(--primary)]' : isRed ? 'text-red-400' : isBlue ? 'text-blue-400' : 'text-gray-700'}`}>
+                  {date.getDate()}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {MEAL_ORDER.map((mealTime) => {
+            const plan = getPlan(selectedDate, mealTime);
+            const cubeCounts = (plan?.cube_ids ?? []).reduce<Record<string, number>>((acc, id) => {
+              acc[id] = (acc[id] ?? 0) + 1; return acc;
+            }, {});
+            const plannedEntries = Object.entries(cubeCounts).map(([id, count]) => ({
+              cube: cubes.find((c) => c.id === id),
+              count,
+            })).filter((e) => e.cube).sort((a, b) => {
+              const ai = MEAL_PLAN_CATEGORY_ORDER.indexOf(a.cube!.category as typeof MEAL_PLAN_CATEGORY_ORDER[number]);
+              const bi = MEAL_PLAN_CATEGORY_ORDER.indexOf(b.cube!.category as typeof MEAL_PLAN_CATEGORY_ORDER[number]);
+              return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+            }) as { cube: Cube; count: number }[];
+            const isPast = new Date(selectedDate + 'T00:00:00') < today && selectedDate !== todayKey;
+
+            return (
+              <div key={mealTime} className={`rounded-2xl border p-3 ${isPast ? 'bg-gray-50/50 border-gray-100' : plan?.logged ? 'bg-green-50/50 border-green-200' : 'bg-white border-[var(--border)]'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-gray-600">{MEAL_TIMES[mealTime]}</span>
+                  <div className="flex items-center gap-2">
+                    {plan?.logged && (
+                      <span className="flex items-center gap-1 text-[11px] text-green-500 font-medium">
+                        <CheckCircle2 size={11} /> 기록됨
+                      </span>
+                    )}
+                    {plans.some((p) => p.date === selectedDate && p.meal_time === mealTime) && (
+                      <button onClick={() => setDeleteAllMealTime(mealTime)} className="text-[10px] text-red-400 hover:text-red-600 transition">전체 삭제</button>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {plannedEntries.map(({ cube, count }) => (
+                    <div key={cube.id} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${MEAL_COLORS[mealTime]} ${isPast ? 'opacity-70' : ''}`}>
+                      <span className="leading-none">{cube.emoji}</span>
+                      <span className="flex-1 font-medium truncate">{cube.name}</span>
+                      <span className="text-xs opacity-60">{cube.grams_per_cube}g</span>
+                      {count > 1 && <span className="font-bold text-xs">{count}</span>}
+                      <button onClick={() => removeCube(selectedDate, mealTime, cube.id, cube.name)} className="opacity-50 hover:opacity-100 transition flex-shrink-0"><X size={12} /></button>
+                    </div>
+                  ))}
+                  {(plan?.custom_items ?? []).map((item, i) => (
+                    <div key={`custom-${i}`} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm bg-purple-50 border-purple-200 text-purple-700 ${isPast ? 'opacity-70' : ''}`}>
+                      <span className="flex-1 font-medium truncate">{item.name}</span>
+                      {item.grams > 0 && <span className="text-xs opacity-60">{item.grams}g</span>}
+                      <button onClick={() => { const newCustomItems = (plan?.custom_items ?? []).filter((_, j) => j !== i); handleSave(selectedDate, mealTime, plan?.cube_ids ?? [], newCustomItems); }} className="opacity-50 hover:opacity-100 transition flex-shrink-0"><X size={12} /></button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setEditing({ date: selectedDate, meal_time: mealTime })}
+                    className="flex items-center justify-center gap-1 w-full py-1.5 rounded-xl border border-dashed border-gray-200 text-gray-300 hover:text-[var(--primary)] hover:border-orange-300 hover:bg-orange-50 transition text-xs"
+                  >
+                    <Plus size={13} /> 추가
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* PC: 주간 그리드 */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full min-w-[600px] border-collapse table-fixed">
           <thead>
             <tr>
