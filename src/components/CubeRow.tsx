@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef } from 'react'; // useRef: expiry date inputs
 import Link from 'next/link';
 import { Cube, getStockStatus } from '@/types';
 import { Minus, Plus, Trash2 } from 'lucide-react';
@@ -40,11 +40,8 @@ export default function CubeRow({ cube, expiryWarningDays = 7, onUpdate, onDelet
 
   // 인라인 편집 상태
   const [editingExpiry, setEditingExpiry]     = useState(false);
-  const [editingGrams, setEditingGrams]       = useState(false);
   const [expiryWarn, setExpiryWarn]           = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [gramsDraft, setGramsDraft]       = useState(String(cube.grams_per_cube));
-  const gramsRef = useRef<HTMLInputElement>(null);
 
   // 날짜 세 칸 분리
   const parsedDate = cube.expiry_date ? cube.expiry_date.split('-') : ['', '', ''];
@@ -72,15 +69,6 @@ export default function CubeRow({ cube, expiryWarningDays = 7, onUpdate, onDelet
     setEditingExpiry(false);
   }
 
-  function saveGrams() {
-    const num = parseInt(gramsDraft, 10);
-    const valid = isNaN(num) || num < 1 ? cube.grams_per_cube : num;
-    setGramsDraft(String(valid));
-    const updated = updateCube(cube.id, { grams_per_cube: valid });
-    if (updated && onUpdate) onUpdate(updated);
-    setEditingGrams(false);
-  }
-
   function adjustQuantity(delta: number) {
     const updated = updateCube(cube.id, { quantity: Math.max(0, cube.quantity + delta) });
     if (updated && onUpdate) onUpdate(updated);
@@ -92,7 +80,7 @@ export default function CubeRow({ cube, expiryWarningDays = 7, onUpdate, onDelet
         {/* 상태 바 */}
         <div className={`w-1 h-8 rounded-full flex-shrink-0 ${bar}`} />
 
-        {/* 이모티콘 + 이름 */}
+        {/* 이모티콘 + 이름 + g */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <span className="text-lg leading-none flex-shrink-0">{cube.emoji ?? '🥦'}</span>
           <Link
@@ -101,6 +89,7 @@ export default function CubeRow({ cube, expiryWarningDays = 7, onUpdate, onDelet
           >
             {cube.name}
           </Link>
+          <span className="text-xs text-gray-400 flex-shrink-0">{cube.grams_per_cube}g</span>
         </div>
 
         {/* 유통기한 — 클릭 시 date input */}
@@ -186,33 +175,6 @@ export default function CubeRow({ cube, expiryWarningDays = 7, onUpdate, onDelet
           )}
         </div>
 
-        {/* g 표기 — 클릭 시 number input */}
-        <div className="hidden sm:block w-16 text-right flex-shrink-0">
-          {editingGrams ? (
-            <input
-              ref={gramsRef}
-              type="text"
-              inputMode="numeric"
-              autoFocus
-              value={gramsDraft}
-              onChange={(e) => setGramsDraft(e.target.value.replace(/[^0-9]/g, ''))}
-              onFocus={(e) => e.target.select()}
-              onBlur={saveGrams}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') saveGrams();
-                if (e.key === 'Escape') { setGramsDraft(String(cube.grams_per_cube)); setEditingGrams(false); }
-              }}
-              className="w-full text-right border border-[var(--primary)] rounded-md px-1.5 py-0.5 text-xs focus:outline-none"
-            />
-          ) : (
-            <button
-              onClick={() => { setGramsDraft(String(cube.grams_per_cube)); setEditingGrams(true); }}
-              className="text-xs text-gray-400 hover:underline decoration-dashed underline-offset-2 w-full text-right"
-            >
-              {cube.grams_per_cube}g/개
-            </button>
-          )}
-        </div>
 
         {/* 수량 + 상태 */}
         <div className="flex items-center gap-3 flex-shrink-0">
@@ -225,7 +187,7 @@ export default function CubeRow({ cube, expiryWarningDays = 7, onUpdate, onDelet
               <Minus size={12} />
             </button>
             <span className="text-sm font-bold text-gray-800 w-8 text-center">
-              {cube.quantity}<span className="text-xs font-normal text-gray-400">개</span>
+              {cube.quantity}
             </span>
             <button
               onClick={() => adjustQuantity(1)}
