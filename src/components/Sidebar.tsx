@@ -37,7 +37,11 @@ export default function Sidebar() {
   return (
     <aside className="hidden md:flex flex-col w-56 h-screen sticky top-0 bg-white border-r border-[var(--border)] py-6 px-3 overflow-y-auto">
       <Link href="/" className="mb-8 px-3 flex items-center hover:opacity-80 transition">
-        <span className="text-2xl">🍼</span>
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <polygon points="14,3 25,9 14,15 3,9" fill="#F4A460"/>
+          <polygon points="3,9 14,15 14,25 3,19" fill="#E8734A"/>
+          <polygon points="25,9 14,15 14,25 25,19" fill="#C4522A"/>
+        </svg>
         <span className="ml-2 font-bold text-lg text-[var(--primary)]">Cubridge</span>
       </Link>
 
