@@ -333,7 +333,7 @@ export default function SchedulePage() {
       )}
 
       {/* 주 네비게이션 */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center justify-center gap-3 mb-4">
         <button onClick={prevWeek} className="p-1.5 rounded-lg hover:bg-gray-100 transition"><ChevronLeft size={18} /></button>
         <span className="font-semibold text-gray-700 text-sm">{weekLabel}</span>
         <button onClick={nextWeek} className="p-1.5 rounded-lg hover:bg-gray-100 transition"><ChevronRight size={18} /></button>
@@ -344,7 +344,7 @@ export default function SchedulePage() {
 
       {/* 모바일: 날짜 탭 + 하루 세로 목록 */}
       <div className="sm:hidden">
-        <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+        <div className="grid grid-cols-7 gap-1.5 mb-4">
           {weekDates.map((date, i) => {
             const key = toDateKey(date);
             const isToday = isSameDay(date, today);
@@ -356,7 +356,7 @@ export default function SchedulePage() {
               <button
                 key={key}
                 onClick={() => setSelectedDate(key)}
-                className={`flex flex-col items-center px-3 py-1.5 rounded-xl flex-shrink-0 border transition ${
+                className={`flex flex-col items-center py-1.5 rounded-xl border transition ${
                   isSelected ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'bg-white border-[var(--border)] hover:bg-orange-50'
                 }`}
               >
