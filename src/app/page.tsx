@@ -69,7 +69,7 @@ function DashboardModal({
       onClick={onClose}
     >
       <div
-        className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-xl flex flex-col max-h-[80vh]"
+        className="bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl shadow-xl flex flex-col max-h-[80vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
