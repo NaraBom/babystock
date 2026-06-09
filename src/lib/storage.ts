@@ -5,6 +5,7 @@ const LOGS_KEY = 'cubridge_logs';
 const SETTINGS_KEY = 'cubridge_settings';
 const BABY_KEY = 'cubridge_baby';
 const MEAL_PLANS_KEY = 'cubridge_meal_plans';
+const SEEDED_KEY = 'cubridge_seeded';
 
 export interface BabyProfile {
   name: string;
@@ -36,6 +37,7 @@ export interface AppSettings {
   defaultDangerThreshold: number;  // 새 큐브 기본 부족 기준
   defaultGramsPerCube: number;     // 새 큐브 기본 용량
   pushNotification: boolean;       // 브라우저 푸시 알림
+  weekStartsOnSunday: boolean;     // 주 시작 요일 (true=일요일, false=월요일)
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -44,6 +46,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   defaultDangerThreshold: 2,
   defaultGramsPerCube: 20,
   pushNotification: false,
+  weekStartsOnSunday: false,
 };
 
 export function getSettings(): AppSettings {
@@ -68,6 +71,16 @@ export function clearAllData() {
 
 function isBrowser() {
   return typeof window !== 'undefined';
+}
+
+export function isSeeded(): boolean {
+  if (!isBrowser()) return false;
+  return localStorage.getItem(SEEDED_KEY) === '1';
+}
+
+export function markSeeded() {
+  if (!isBrowser()) return;
+  localStorage.setItem(SEEDED_KEY, '1');
 }
 
 export function getCubes(): Cube[] {
@@ -187,6 +200,14 @@ export function getMealPlans(): MealPlan[] {
   } catch { return []; }
 }
 
+export function deleteMealPlansByMealTime(meal_time: MealPlan['meal_time']) {
+  saveMealPlans(getMealPlans().filter((p) => p.meal_time !== meal_time));
+}
+
+export function deleteMealPlansByDate(date: string) {
+  saveMealPlans(getMealPlans().filter((p) => p.date !== date));
+}
+
 export function markMealPlansLogged(date: string, meal_times: MealPlan['meal_time'][]) {
   const plans = getMealPlans();
   let changed = false;
@@ -204,17 +225,20 @@ export function saveMealPlans(plans: MealPlan[]) {
   localStorage.setItem(MEAL_PLANS_KEY, JSON.stringify(plans));
 }
 
-export function upsertMealPlan(date: string, meal_time: MealPlan['meal_time'], cube_ids: string[]) {
+export function upsertMealPlan(date: string, meal_time: MealPlan['meal_time'], cube_ids: string[], custom_items: MealPlan['custom_items'] = []) {
   const plans = getMealPlans();
   const idx = plans.findIndex((p) => p.date === date && p.meal_time === meal_time);
-  if (cube_ids.length === 0) {
+  if (cube_ids.length === 0 && custom_items.length === 0) {
     if (idx !== -1) saveMealPlans(plans.filter((_, i) => i !== idx));
     return;
   }
   if (idx !== -1) {
-    plans[idx] = { ...plans[idx], cube_ids, logged: false };
+    const existing = plans[idx];
+    const prevIds = new Set(existing.cube_ids);
+    const hasNewCube = cube_ids.some((id) => !prevIds.has(id));
+    plans[idx] = { ...existing, cube_ids, custom_items, logged: hasNewCube ? false : existing.logged };
   } else {
-    plans.push({ id: crypto.randomUUID(), date, meal_time, cube_ids, logged: false });
+    plans.push({ id: crypto.randomUUID(), date, meal_time, cube_ids, custom_items, logged: false });
   }
   saveMealPlans(plans);
 }

@@ -39,6 +39,7 @@ export default function LogCalendar({
   function calcStats(logs: ConsumptionLog[]) {
     const count = logs.reduce((s, l) => s + l.quantity, 0);
     const grams = logs.reduce((s, l) => {
+      if (l.grams_override !== undefined) return s + l.grams_override;
       const cube = cubes.find((c) => c.id === l.cube_id);
       return s + l.quantity * (cube?.grams_per_cube ?? 0);
     }, 0);

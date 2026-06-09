@@ -31,6 +31,7 @@ export interface ConsumptionLog {
   cube_id: string;
   cube_name: string;
   quantity: number;
+  grams_override?: number; // 수기 입력 항목의 직접 지정 그램 (cube_id가 없을 때 사용)
   meal_time: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   logged_at: string;
   notes: string | null;
@@ -43,6 +44,7 @@ export interface MealPlan {
   date: string; // 'YYYY-MM-DD'
   meal_time: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   cube_ids: string[];
+  custom_items: { name: string; grams: number }[]; // 수기 입력 항목
   logged: boolean; // 소비 기록에 추가되었는지
 }
 

@@ -55,7 +55,7 @@ export default function LogsPage() {
     date: todayKey,
     time: new Date().toTimeString().slice(0, 5),
     notes: '',
-    entries: [{ id: crypto.randomUUID(), cubeId: '', quantity: 1 }] as LogEntry[],
+    entries: [{ id: crypto.randomUUID(), cubeId: '', customName: '', customGrams: 0, isCustom: false, quantity: 1 }] as LogEntry[],
   });
 
   const logsByDate = useMemo(() => {
@@ -117,7 +117,7 @@ export default function LogsPage() {
   }
 
   function openForm() {
-    setForm({ error: null, date: selectedDate, time: new Date().toTimeString().slice(0, 5), notes: '', entries: [{ id: crypto.randomUUID(), cubeId: '', quantity: 1 }] });
+    setForm({ error: null, date: selectedDate, time: new Date().toTimeString().slice(0, 5), notes: '', entries: [{ id: crypto.randomUUID(), cubeId: '', customName: '', customGrams: 0, isCustom: false, quantity: 1 }] });
     setShowForm(true);
   }
 
@@ -133,7 +133,7 @@ export default function LogsPage() {
 
     const totalByCube = new Map<string, number>();
     for (const entry of form.entries) {
-      if (!entry.cubeId) continue;
+      if (entry.isCustom || !entry.cubeId) continue;
       totalByCube.set(entry.cubeId, (totalByCube.get(entry.cubeId) ?? 0) + entry.quantity);
     }
     for (const [cubeId, total] of totalByCube) {
@@ -147,12 +147,17 @@ export default function LogsPage() {
 
     let firstDepleted: Cube | null = null;
     for (const entry of form.entries) {
-      if (!entry.cubeId) continue;
-      const cube = cubes.find((c) => c.id === entry.cubeId);
-      if (!cube) continue;
-      addLog({ cube_id: entry.cubeId, cube_name: cube.name, quantity: entry.quantity, meal_time: mealTime, logged_at: loggedAt, notes: form.notes || null, reaction: null });
-      const updatedCube = getCubes().find((c) => c.id === entry.cubeId);
-      if (!firstDepleted && updatedCube && updatedCube.quantity === 0) firstDepleted = updatedCube;
+      if (entry.isCustom) {
+        if (!entry.customName.trim()) continue;
+        addLog({ cube_id: '', cube_name: entry.customName.trim(), quantity: entry.quantity, grams_override: entry.customGrams > 0 ? entry.customGrams : undefined, meal_time: mealTime, logged_at: loggedAt, notes: form.notes || null, reaction: null });
+      } else {
+        if (!entry.cubeId) continue;
+        const cube = cubes.find((c) => c.id === entry.cubeId);
+        if (!cube) continue;
+        addLog({ cube_id: entry.cubeId, cube_name: cube.name, quantity: entry.quantity, meal_time: mealTime, logged_at: loggedAt, notes: form.notes || null, reaction: null });
+        const updatedCube = getCubes().find((c) => c.id === entry.cubeId);
+        if (!firstDepleted && updatedCube && updatedCube.quantity === 0) firstDepleted = updatedCube;
+      }
     }
 
     setLogs(getLogs());
@@ -170,7 +175,7 @@ export default function LogsPage() {
       date: toDateKey(d),
       time: d.toTimeString().slice(0, 5),
       notes: log.notes ?? '',
-      entries: [{ id: crypto.randomUUID(), cubeId: log.cube_id, quantity: log.quantity }],
+      entries: [{ id: crypto.randomUUID(), cubeId: log.cube_id || '', customName: log.cube_id ? '' : log.cube_name, customGrams: log.grams_override ?? 0, isCustom: !log.cube_id, quantity: log.quantity }],
     });
     setShowForm(true);
   }
@@ -186,9 +191,9 @@ export default function LogsPage() {
     else if (hour >= 14 && hour < 17) mealTime = 'dinner';
     const loggedAt = new Date(`${form.date}T${form.time}:00`).toISOString();
 
-    // 복원될 재고를 포함해서 유효성 검사
+    // 복원될 재고를 포함해서 유효성 검사 (큐브 선택 항목만)
     for (const entry of form.entries) {
-      if (!entry.cubeId) continue;
+      if (entry.isCustom || !entry.cubeId) continue;
       const cube = cubes.find((c) => c.id === entry.cubeId);
       if (!cube) continue;
       const restoredQty = entry.cubeId === editTarget.cube_id
@@ -205,10 +210,15 @@ export default function LogsPage() {
 
     // 새 기록 추가
     for (const entry of form.entries) {
-      if (!entry.cubeId) continue;
-      const cube = getCubes().find((c) => c.id === entry.cubeId);
-      if (!cube) continue;
-      addLog({ cube_id: entry.cubeId, cube_name: cube.name, quantity: entry.quantity, meal_time: mealTime, logged_at: loggedAt, notes: form.notes || null, reaction: null });
+      if (entry.isCustom) {
+        if (!entry.customName.trim()) continue;
+        addLog({ cube_id: '', cube_name: entry.customName.trim(), quantity: entry.quantity, grams_override: entry.customGrams > 0 ? entry.customGrams : undefined, meal_time: mealTime, logged_at: loggedAt, notes: form.notes || null, reaction: null });
+      } else {
+        if (!entry.cubeId) continue;
+        const cube = getCubes().find((c) => c.id === entry.cubeId);
+        if (!cube) continue;
+        addLog({ cube_id: entry.cubeId, cube_name: cube.name, quantity: entry.quantity, meal_time: mealTime, logged_at: loggedAt, notes: form.notes || null, reaction: null });
+      }
     }
 
     setLogs(getLogs());

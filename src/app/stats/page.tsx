@@ -236,9 +236,17 @@ export default function StatsPage() {
                           <td className="py-2">
                             <span className="mr-1">{cube.emoji}</span>
                             {cube.name}
+                            <span className="text-gray-400 ml-1">({cube.grams_per_cube}g)</span>
                           </td>
-                          <td className="text-right py-2 text-gray-600">{cube.quantity}개</td>
-                          <td className="text-right py-2 text-gray-600">{dailyUsage > 0 ? `${dailyUsage.toFixed(1)}개` : '-'}</td>
+                          <td className="text-right py-2 text-gray-600">
+                            {cube.quantity}개
+                            <span className="text-gray-400 ml-1">({(cube.quantity * cube.grams_per_cube).toLocaleString()}g)</span>
+                          </td>
+                          <td className="text-right py-2 text-gray-600">
+                            {dailyUsage > 0 ? (
+                              <>{dailyUsage.toFixed(1)}개 <span className="text-gray-400">({(dailyUsage * cube.grams_per_cube).toFixed(0)}g)</span></>
+                            ) : '-'}
+                          </td>
                           <td className={`text-right py-2 font-medium ${urgent ? 'text-red-500' : warning ? 'text-orange-400' : 'text-gray-600'}`}>
                             {depletionDate ? `${depletionDate} (${daysLeft}일)` : '소비 없음'}
                           </td>
