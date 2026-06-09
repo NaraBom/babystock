@@ -55,13 +55,30 @@ function DashboardModal({
     Object.keys(grouped).filter((k) => !MODAL_CATEGORY_ORDER.includes(k))
   );
 
-  // 오늘 소비 모달용 — 식사 타임별 그룹
+  // 오늘 소비 모달용 — 식사 타임별 그룹 + 같은 큐브 합산
   const mealOrder = ['breakfast', 'lunch', 'dinner', 'snack'] as const;
   const logsByMeal = mealOrder.reduce<Record<string, ConsumptionLog[]>>((acc, mt) => {
     const items = todayLogs.filter((l) => l.meal_time === mt);
     if (items.length) acc[mt] = items;
     return acc;
   }, {});
+
+  function mergeLogs(logs: ConsumptionLog[]): { key: string; cube_id: string; cube_name: string; grams: number | null; quantity: number; reaction: ConsumptionLog['reaction'] | null }[] {
+    const map = new Map<string, { cube_id: string; cube_name: string; grams: number | null; quantity: number; reaction: ConsumptionLog['reaction'] | null }>();
+    for (const log of logs) {
+      const cube = cubes.find((c) => c.id === log.cube_id);
+      const grams = log.grams_override ?? cube?.grams_per_cube ?? null;
+      const key = log.cube_id || log.cube_name;
+      const existing = map.get(key);
+      if (existing) {
+        existing.quantity += log.quantity;
+        if (existing.reaction !== log.reaction) existing.reaction = null;
+      } else {
+        map.set(key, { cube_id: log.cube_id, cube_name: log.cube_name, grams, quantity: log.quantity, reaction: log.reaction ?? null });
+      }
+    }
+    return Array.from(map.entries()).map(([key, v]) => ({ key, ...v }));
+  }
 
   return (
     <div
@@ -91,17 +108,18 @@ function DashboardModal({
                   <div key={mt}>
                     <p className="text-xs font-semibold text-gray-400 mb-1.5 px-1">{MEAL_TIMES[mt]}</p>
                     <div className="flex flex-col gap-1">
-                      {logsByMeal[mt].map((log) => {
-                        const cube = cubes.find((c) => c.id === log.cube_id);
-                        const grams = log.grams_override ?? cube?.grams_per_cube;
-                        const reaction = log.reaction ? REACTIONS[log.reaction] : null;
+                      {mergeLogs(logsByMeal[mt]).map((item) => {
+                        const cube = cubes.find((c) => c.id === item.cube_id);
+                        const reaction = item.reaction ? REACTIONS[item.reaction] : null;
                         return (
-                          <div key={log.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50">
+                          <div key={item.key} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50">
                             {cube && <span className="text-lg leading-none">{cube.emoji}</span>}
-                            <span className="flex-1 text-sm font-medium text-gray-700">{log.cube_name}</span>
-                            {grams != null && <span className="text-xs text-gray-400">{grams}g</span>}
-                            {reaction && <span className={`text-xs ${reaction.color}`}>{reaction.emoji} {reaction.label}</span>}
-                            <span className="text-sm font-semibold text-gray-700 flex-shrink-0">{log.quantity}개</span>
+                            <span className="flex-1 text-sm font-medium text-gray-700 min-w-0">
+                              {item.cube_name}
+                              {item.grams != null && <span className="text-xs font-normal text-gray-400 ml-1">{item.grams}g</span>}
+                            </span>
+                            {reaction && <span className={`text-xs flex-shrink-0 ${reaction.color}`}>{reaction.emoji} {reaction.label}</span>}
+                            <span className="text-sm font-semibold text-gray-700 flex-shrink-0">{item.quantity}개</span>
                           </div>
                         );
                       })}

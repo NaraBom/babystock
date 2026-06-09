@@ -110,7 +110,7 @@ export default function LogList({ selectedLogs, selectedDateLabel, cubes, onAddC
                   </button>
                   <button
                     onClick={() => onDeleteClick(log)}
-                    className="p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-400 transition"
+                    className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-500 transition"
                   >
                     <Trash2 size={14} />
                   </button>

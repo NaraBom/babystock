@@ -5,7 +5,7 @@ import { useHolidays } from '@/hooks/useHolidays';
 import { Cube, MealPlan, MEAL_TIMES, CATEGORIES } from '@/types';
 import { getCubes, getLogs, getMealPlans, getSettings, upsertMealPlan, addLog, deleteLog, markMealPlansLogged, deleteMealPlansByMealTime, deleteMealPlansByDate } from '@/lib/storage';
 import { isHoliday } from '@/lib/holidays';
-import { ChevronLeft, ChevronRight, Plus, X, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, CheckCircle2 } from 'lucide-react';
 
 type MealTime = MealPlan['meal_time'];
 const MEAL_ORDER: MealTime[] = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -191,11 +191,73 @@ function CubeSelector({ cubes, selected, selectedCustomItems, onClose, onSave }:
   );
 }
 
+function MealDetailModal({
+  date, mealTime, plan, cubes, isPast,
+  onClose, onEdit,
+}: {
+  date: string; mealTime: MealTime; plan: MealPlan | undefined; cubes: Cube[]; isPast: boolean;
+  onClose: () => void; onEdit: () => void;
+}) {
+  const cubeCounts = (plan?.cube_ids ?? []).reduce<Record<string, number>>((acc, id) => {
+    acc[id] = (acc[id] ?? 0) + 1; return acc;
+  }, {});
+  const entries = Object.entries(cubeCounts).map(([id, count]) => ({
+    cube: cubes.find((c) => c.id === id), count,
+  })).filter((e) => e.cube).sort((a, b) => {
+    const ai = MEAL_PLAN_CATEGORY_ORDER.indexOf(a.cube!.category as typeof MEAL_PLAN_CATEGORY_ORDER[number]);
+    const bi = MEAL_PLAN_CATEGORY_ORDER.indexOf(b.cube!.category as typeof MEAL_PLAN_CATEGORY_ORDER[number]);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  }) as { cube: Cube; count: number }[];
+  const customItems = plan?.custom_items ?? [];
+  const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric', weekday: 'short' });
+
+  return (
+    <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm flex flex-col max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+          <div>
+            <span className="font-semibold text-gray-800">{MEAL_TIMES[mealTime]}</span>
+            <span className="text-xs text-gray-400 ml-2">{dateLabel}</span>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100"><X size={18} /></button>
+        </div>
+        <div className="overflow-y-auto flex-1 px-4 py-3 flex flex-col gap-2">
+          {entries.length === 0 && customItems.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-6">등록된 식단이 없어요</p>
+          ) : (
+            <>
+              {entries.map(({ cube, count }) => (
+                <div key={cube.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${MEAL_COLORS[mealTime]} ${isPast ? 'opacity-70' : ''}`}>
+                  <span className="text-lg leading-none">{cube.emoji}</span>
+                  <span className="flex-1 text-sm font-medium">{cube.name}</span>
+                  <span className="text-xs opacity-60">{cube.grams_per_cube}g</span>
+                  {count > 1 && <span className="text-xs font-bold">×{count}</span>}
+                </div>
+              ))}
+              {customItems.map((item, i) => (
+                <div key={`c-${i}`} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border bg-purple-50 border-purple-200 text-purple-700">
+                  <span className="flex-1 text-sm font-medium">{item.name}</span>
+                  {item.grams > 0 && <span className="text-xs opacity-60">{item.grams}g</span>}
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+        <div className="flex gap-2 p-4 border-t border-[var(--border)]">
+          <button onClick={onEdit} className="flex-1 py-2.5 bg-[var(--primary)] text-white rounded-xl text-sm font-medium hover:opacity-90 transition">편집</button>
+          <button onClick={onClose} className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition">닫기</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SchedulePage() {
   const [cubes, setCubes] = useState<Cube[]>(() => getCubes());
   const [plans, setPlans] = useState<MealPlan[]>(() => getMealPlans());
   const [weekBase, setWeekBase] = useState(() => new Date());
   const [editing, setEditing] = useState<{ date: string; meal_time: MealTime } | null>(null);
+  const [viewModal, setViewModal] = useState<{ date: string; meal_time: MealTime } | null>(null);
   const [addedFeedback, setAddedFeedback] = useState<string | null>(null);
   const [removeConfirm, setRemoveConfirm] = useState<{ date: string; meal_time: MealTime; cubeId: string; cubeName: string } | null>(null);
   const [deleteAllMealTime, setDeleteAllMealTime] = useState<MealTime | null>(null);
@@ -388,7 +450,7 @@ export default function SchedulePage() {
             const isPast = new Date(selectedDate + 'T00:00:00') < today && selectedDate !== todayKey;
 
             return (
-              <div key={mealTime} className={`rounded-2xl border p-3 ${isPast ? 'bg-gray-50/50 border-gray-100' : plan?.logged ? 'bg-green-50/50 border-green-200' : 'bg-white border-[var(--border)]'}`}>
+              <div key={mealTime} onClick={() => setViewModal({ date: selectedDate, meal_time: mealTime })} className={`rounded-2xl border p-3 cursor-pointer hover:shadow-sm transition-shadow ${isPast ? 'bg-gray-50/50 border-gray-100' : plan?.logged ? 'bg-green-50/50 border-green-200' : 'bg-white border-[var(--border)]'}`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-semibold text-gray-600">{MEAL_TIMES[mealTime]}</span>
                   <div className="flex items-center gap-2">
@@ -408,23 +470,25 @@ export default function SchedulePage() {
                       <span className="leading-none">{cube.emoji}</span>
                       <span className="flex-1 font-medium truncate">{cube.name}</span>
                       <span className="text-xs opacity-60">{cube.grams_per_cube}g</span>
-                      {count > 1 && <span className="font-bold text-xs">{count}</span>}
-                      <button onClick={() => removeCube(selectedDate, mealTime, cube.id, cube.name)} className="opacity-50 hover:opacity-100 transition flex-shrink-0"><X size={12} /></button>
+                      {count > 1 && <span className="font-bold text-xs">×{count}</span>}
+                      <button onClick={(e) => { e.stopPropagation(); removeCube(selectedDate, mealTime, cube.id, cube.name); }} className="text-red-400 hover:text-red-600 transition flex-shrink-0"><X size={12} /></button>
                     </div>
                   ))}
                   {(plan?.custom_items ?? []).map((item, i) => (
                     <div key={`custom-${i}`} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm bg-purple-50 border-purple-200 text-purple-700 ${isPast ? 'opacity-70' : ''}`}>
                       <span className="flex-1 font-medium truncate">{item.name}</span>
                       {item.grams > 0 && <span className="text-xs opacity-60">{item.grams}g</span>}
-                      <button onClick={() => { const newCustomItems = (plan?.custom_items ?? []).filter((_, j) => j !== i); handleSave(selectedDate, mealTime, plan?.cube_ids ?? [], newCustomItems); }} className="opacity-50 hover:opacity-100 transition flex-shrink-0"><X size={12} /></button>
+                      <button onClick={(e) => { e.stopPropagation(); const newCustomItems = (plan?.custom_items ?? []).filter((_, j) => j !== i); handleSave(selectedDate, mealTime, plan?.cube_ids ?? [], newCustomItems); }} className="text-red-400 hover:text-red-600 transition flex-shrink-0"><X size={12} /></button>
                     </div>
                   ))}
-                  <button
-                    onClick={() => setEditing({ date: selectedDate, meal_time: mealTime })}
-                    className="flex items-center justify-center gap-1 w-full py-1.5 rounded-xl border border-dashed border-gray-200 text-gray-300 hover:text-[var(--primary)] hover:border-orange-300 hover:bg-orange-50 transition text-xs"
-                  >
-                    <Plus size={13} /> 추가
-                  </button>
+                  {plannedEntries.length === 0 && (plan?.custom_items ?? []).length === 0 && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditing({ date: selectedDate, meal_time: mealTime }); }}
+                      className="flex items-center justify-center w-full py-1.5 rounded-xl border border-dashed border-gray-200 text-gray-300 hover:text-[var(--primary)] hover:border-orange-300 hover:bg-orange-50 transition text-xs"
+                    >
+                      식단 추가
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -502,7 +566,7 @@ export default function SchedulePage() {
 
                   return (
                     <td key={dateKey} className="p-1 align-top">
-                      <div className={`min-h-[144px] rounded-xl border p-1.5 flex flex-col gap-1 transition-colors overflow-hidden ${
+                      <div onClick={() => setViewModal({ date: dateKey, meal_time: mealTime })} className={`min-h-[144px] rounded-xl border p-1.5 flex flex-col gap-1 transition-colors overflow-hidden cursor-pointer hover:shadow-sm ${
                         isPast ? 'bg-gray-50/50 border-gray-100'
                         : plan?.logged ? 'bg-green-50/50 border-green-200'
                         : 'bg-white border-[var(--border)] hover:border-gray-300'
@@ -519,10 +583,10 @@ export default function SchedulePage() {
                           >
                             <span className="leading-none">{cube.emoji}</span>
                             <span className="truncate flex-1 font-medium min-w-0">{cube.name}</span>
-                            {count > 1 && <span className="font-bold flex-shrink-0">{count}</span>}
+                            {count > 1 && <span className="font-bold flex-shrink-0">×{count}</span>}
                             <button
-                              onClick={() => removeCube(dateKey, mealTime, cube.id, cube.name)}
-                              className="opacity-50 hover:opacity-100 transition flex-shrink-0"
+                              onClick={(e) => { e.stopPropagation(); removeCube(dateKey, mealTime, cube.id, cube.name); }}
+                              className="text-red-400 hover:text-red-600 transition flex-shrink-0"
                             >
                               <X size={10} />
                             </button>
@@ -536,22 +600,25 @@ export default function SchedulePage() {
                             <span className="truncate flex-1 font-medium min-w-0">{item.name}</span>
                             {item.grams > 0 && <span className="flex-shrink-0 opacity-60">{item.grams}g</span>}
                             <button
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 const newCustomItems = (plan?.custom_items ?? []).filter((_, j) => j !== i);
                                 handleSave(dateKey, mealTime, plan?.cube_ids ?? [], newCustomItems);
                               }}
-                              className="opacity-50 hover:opacity-100 transition flex-shrink-0"
+                              className="text-red-400 hover:text-red-600 transition flex-shrink-0"
                             >
                               <X size={10} />
                             </button>
                           </div>
                         ))}
-                        <button
-                          onClick={() => setEditing({ date: dateKey, meal_time: mealTime })}
-                          className="flex items-center justify-center w-full mt-auto py-0.5 rounded-lg text-gray-300 hover:text-[var(--primary)] hover:bg-orange-50 transition"
-                        >
-                          <Plus size={14} />
-                        </button>
+                        {plannedEntries.length === 0 && (plan?.custom_items ?? []).length === 0 && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setEditing({ date: dateKey, meal_time: mealTime }); }}
+                            className="flex-1 flex items-center justify-center w-full rounded-lg text-gray-300 hover:text-[var(--primary)] hover:bg-orange-50 transition text-xs"
+                          >
+                            식단 추가
+                          </button>
+                        )}
                       </div>
                     </td>
                   );
@@ -665,6 +732,23 @@ export default function SchedulePage() {
           </div>
         </div>
       )}
+
+      {viewModal && (() => {
+        const vPlan = getPlan(viewModal.date, viewModal.meal_time);
+        const vDate = new Date(viewModal.date + 'T00:00:00');
+        const vIsPast = vDate < today && viewModal.date !== todayKey;
+        return (
+          <MealDetailModal
+            date={viewModal.date}
+            mealTime={viewModal.meal_time}
+            plan={vPlan}
+            cubes={cubes}
+            isPast={vIsPast}
+            onClose={() => setViewModal(null)}
+            onEdit={() => { setEditing({ date: viewModal.date, meal_time: viewModal.meal_time }); setViewModal(null); }}
+          />
+        );
+      })()}
 
       {editing && (
         <CubeSelector

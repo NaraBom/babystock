@@ -37,7 +37,7 @@ export default function CubeForm({ cube }: Props) {
       expiry_date: cube?.expiry_date ?? defaultExpiry,
       photo_url: cube?.photo_url ?? null,
       notes: cube?.notes ?? null,
-      introduced_at: cube?.introduced_at ?? null,
+      introduced_at: cube ? (cube.introduced_at ?? null) : new Date().toISOString(),
     };
   });
 

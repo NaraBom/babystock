@@ -17,7 +17,11 @@ interface Props {
 function formatIntroducedAt(isoString: string): string {
   const date = new Date(isoString);
   const dateStr = date.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
-  const daysElapsed = Math.floor((Date.now() - date.getTime()) / 86400000);
+  // 로컬 자정 기준으로 경과일 계산 (UTC 파싱 오차 방지)
+  const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const today = new Date();
+  const localToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const daysElapsed = Math.floor((localToday.getTime() - localDate.getTime()) / 86400000);
   return `${dateStr} (D+${daysElapsed})`;
 }
 
@@ -90,9 +94,23 @@ export default function CubeRow({ cube, expiryWarningDays = 7, onUpdate, onDelet
             {cube.name}
           </Link>
           <span className="text-xs text-gray-400 flex-shrink-0">{cube.grams_per_cube}g</span>
+          <span className="text-xs text-gray-400 flex-shrink-0">· 도입 {formatIntroducedAt(cube.introduced_at ?? cube.created_at)}</span>
         </div>
 
-        {/* 유통기한 — 클릭 시 date input */}
+        {/* 유통기한 — 모바일 전용 인라인 표시 */}
+        <div className="sm:hidden text-xs flex-shrink-0">
+          {isExpired && cube.expiry_date && (
+            <span className="text-red-500 font-medium">🚫 {cube.expiry_date}</span>
+          )}
+          {isExpiringSoon && !isExpired && cube.expiry_date && (
+            <span className="text-orange-500 font-medium">⚠ {cube.expiry_date}</span>
+          )}
+          {!isExpired && !isExpiringSoon && (
+            <span className="text-gray-400">{cube.expiry_date ?? '기한 없음'}</span>
+          )}
+        </div>
+
+        {/* 유통기한 — 클릭 시 date input (PC) */}
         <div className="hidden sm:block w-36 text-xs flex-shrink-0">
           {editingExpiry ? (
             <div className="flex flex-col gap-0.5">
@@ -177,28 +195,28 @@ export default function CubeRow({ cube, expiryWarningDays = 7, onUpdate, onDelet
 
 
         {/* 수량 + 상태 */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <span className={`text-xs font-medium ${text} w-8 text-right`}>{label}</span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-0.5">
             <button
               onClick={() => adjustQuantity(-1)}
-              className="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 active:scale-95 transition-transform"
+              className="w-5 h-5 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 active:scale-95 transition-transform"
             >
-              <Minus size={12} />
+              <Minus size={8} />
             </button>
-            <span className="text-sm font-bold text-gray-800 w-8 text-center">
+            <span className="text-sm font-bold text-gray-800 w-5 text-center">
               {cube.quantity}
             </span>
             <button
               onClick={() => adjustQuantity(1)}
-              className="w-7 h-7 rounded-full bg-[var(--primary)] text-white flex items-center justify-center hover:opacity-90 active:scale-95 transition-transform"
+              className="w-5 h-5 rounded-full bg-[var(--primary)] text-white flex items-center justify-center hover:opacity-90 active:scale-95 transition-transform"
             >
-              <Plus size={12} />
+              <Plus size={8} />
             </button>
           </div>
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-red-400 hover:text-red-500 hover:bg-red-50 transition-colors"
           >
             <Trash2 size={13} />
           </button>
@@ -217,13 +235,6 @@ export default function CubeRow({ cube, expiryWarningDays = 7, onUpdate, onDelet
           }}
           onCancel={() => setShowDeleteConfirm(false)}
         />
-      )}
-
-      {/* 도입일 */}
-      {cube.introduced_at && (
-        <div className="text-xs text-gray-400 mt-1 pl-4">
-          도입일 {formatIntroducedAt(cube.introduced_at)}
-        </div>
       )}
 
       {/* 수량 도트 표시 */}
