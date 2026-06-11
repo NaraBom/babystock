@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Cube, ConsumptionLog, getStockStatus, MEAL_TIMES, REACTIONS } from '@/types';
 import { getCubes, getLogs, getSettings } from '@/lib/storage';
 import CubeRow from '@/components/CubeRow';
+import EmojiDisplay from '@/components/EmojiDisplay';
 import { AlertCircle, Box, Plus, X } from 'lucide-react';
 
 // 모달에서 사용할 카테고리 표시 순서
@@ -113,7 +114,7 @@ function DashboardModal({
                         const reaction = item.reaction ? REACTIONS[item.reaction] : null;
                         return (
                           <div key={item.key} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50">
-                            {cube && <span className="text-lg leading-none">{cube.emoji}</span>}
+                            {cube && <EmojiDisplay emoji={cube.emoji} size={20} />}
                             <span className="flex-1 text-sm font-medium text-gray-700 min-w-0">
                               {item.cube_name}
                               {item.grams != null && <span className="text-xs font-normal text-gray-400 ml-1">{item.grams}g</span>}

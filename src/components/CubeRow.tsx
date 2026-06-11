@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'; // useRef: expiry date inputs
 import Link from 'next/link';
 import { Cube, getStockStatus } from '@/types';
+import EmojiDisplay from '@/components/EmojiDisplay';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { updateCube, deleteCube } from '@/lib/storage';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -86,7 +87,7 @@ export default function CubeRow({ cube, expiryWarningDays = 7, onUpdate, onDelet
 
         {/* 이모티콘 + 이름 + g */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-lg leading-none flex-shrink-0">{cube.emoji ?? '🥦'}</span>
+          <EmojiDisplay emoji={cube.emoji ?? '/emojis/채소/carrot.png'} size={20} />
           <Link
             href={`/cubes/${cube.id}`}
             className="font-medium text-gray-800 hover:text-[var(--primary)] transition-colors truncate text-sm"

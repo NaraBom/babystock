@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { ConsumptionLog, Cube } from '@/types';
+import EmojiDisplay from '@/components/EmojiDisplay';
 import { getCubes, getLogs } from '@/lib/storage';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -234,7 +235,7 @@ export default function StatsPage() {
                       return (
                         <tr key={cube.id} className="border-b border-gray-50 last:border-0">
                           <td className="py-2">
-                            <span className="mr-1">{cube.emoji}</span>
+                            <EmojiDisplay emoji={cube.emoji} size={18} className="mr-1" />
                             {cube.name}
                             <span className="text-gray-400 ml-1">({cube.grams_per_cube}g)</span>
                           </td>

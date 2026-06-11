@@ -6,6 +6,7 @@ import { Cube, MealPlan, MEAL_TIMES, CATEGORIES } from '@/types';
 import { getCubes, getLogs, getMealPlans, getSettings, upsertMealPlan, addLog, deleteLog, markMealPlansLogged, deleteMealPlansByMealTime, deleteMealPlansByDate } from '@/lib/storage';
 import { isHoliday } from '@/lib/holidays';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import EmojiDisplay from '@/components/EmojiDisplay';
 
 type MealTime = MealPlan['meal_time'];
 const MEAL_ORDER: MealTime[] = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -119,7 +120,7 @@ function CubeSelector({ cubes, selected, selectedCustomItems, onClose, onSave }:
                         count > 0 ? 'bg-orange-50 border-[var(--primary)]' : 'border-transparent hover:bg-gray-50'
                       }`}
                     >
-                      <span className="text-lg">{cube.emoji}</span>
+                      <EmojiDisplay emoji={cube.emoji} size={20} />
                       <span className="flex-1 text-sm font-medium text-gray-700">{cube.name} <span className="text-xs font-normal text-gray-400">{cube.grams_per_cube}g</span></span>
                       <span className="text-xs text-gray-400 flex-shrink-0">{cube.quantity}개 남음</span>
                       <div className="flex items-center gap-2 flex-shrink-0">
@@ -233,7 +234,7 @@ function MealDetailModal({
                 const isLoggedDeleted = isDeleted && plan?.logged;
                 return (
                   <div key={id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${!isDeleted || isLoggedDeleted || snapshot ? MEAL_COLORS[mealTime] : 'bg-gray-50 border-gray-200 text-gray-400'} ${isPast ? 'opacity-70' : ''}`}>
-                    {(cube?.emoji || snapshot?.emoji) && <span className="text-lg leading-none">{cube?.emoji ?? snapshot?.emoji}</span>}
+                    {(cube?.emoji || snapshot?.emoji) && <EmojiDisplay emoji={cube?.emoji ?? snapshot?.emoji ?? ''} size={20} />}
                     <span className="flex-1 text-sm font-medium">{displayName}</span>
                     {(cube?.grams_per_cube != null || snapshot?.grams != null) && <span className="text-xs opacity-60">{cube?.grams_per_cube ?? snapshot?.grams}g</span>}
                     {count > 1 && <span className="text-xs font-bold">×{count}</span>}
@@ -490,7 +491,7 @@ export default function SchedulePage() {
                     const displayName = cube ? cube.name : (snapshot?.name ?? (plan?.logged ? getCubeNameFromLogs(id, selectedDate, mealTime) : '삭제된 큐브'));
                     return (
                     <div key={id} className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm ${(cube || snapshot) ? MEAL_COLORS[mealTime] : 'bg-gray-50 border-gray-200 text-gray-400'} ${isPast ? 'opacity-70' : ''}`}>
-                      {(cube?.emoji || snapshot?.emoji) && <span className="leading-none">{cube?.emoji ?? snapshot?.emoji}</span>}
+                      {(cube?.emoji || snapshot?.emoji) && <EmojiDisplay emoji={cube?.emoji ?? snapshot?.emoji ?? ''} size={18} />}
                       <span className="flex-1 font-medium truncate">{displayName}</span>
                       {(cube?.grams_per_cube != null || snapshot?.grams != null) && <span className="text-xs opacity-60">{cube?.grams_per_cube ?? snapshot?.grams}g</span>}
                       {count > 1 && <span className="font-bold text-xs">×{count}</span>}
@@ -603,7 +604,7 @@ export default function SchedulePage() {
                             key={id}
                             className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-lg border w-full ${(cube || snapshot) ? MEAL_COLORS[mealTime] : 'bg-gray-50 border-gray-200 text-gray-400'} ${isPast ? 'opacity-70' : ''}`}
                           >
-                            {(cube?.emoji || snapshot?.emoji) && <span className="leading-none">{cube?.emoji ?? snapshot?.emoji}</span>}
+                            {(cube?.emoji || snapshot?.emoji) && <EmojiDisplay emoji={cube?.emoji ?? snapshot?.emoji ?? ''} size={14} />}
                             <span className="truncate flex-1 font-medium min-w-0">{displayName}</span>
                             {count > 1 && <span className="font-bold flex-shrink-0">×{count}</span>}
                             <button

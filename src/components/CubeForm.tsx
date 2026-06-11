@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Cube, CATEGORIES, COLOR_TAGS, CATEGORY_EMOJIS } from '@/types';
+import EmojiDisplay from '@/components/EmojiDisplay';
 import { addCube, updateCube, deleteCube, getSettings } from '@/lib/storage';
 import { Trash2, ChevronLeft } from 'lucide-react';
 import ConfirmModal from '@/components/ConfirmModal';
@@ -40,7 +41,7 @@ export default function CubeForm({ cube }: Props) {
 
     return {
       name: cube?.name ?? restore?.name ?? '',
-      emoji: cube?.emoji ?? restore?.emoji ?? '🥦',
+      emoji: cube?.emoji ?? restore?.emoji ?? '/emojis/채소/carrot.png',
       category: cube?.category ?? restore?.category ?? '채소',
       color_tag: cube?.color_tag ?? restore?.color_tag ?? COLOR_TAGS[0],
       quantity: cube?.quantity ?? restore?.quantity ?? 0,
@@ -156,13 +157,13 @@ export default function CubeForm({ cube }: Props) {
                 type="button"
                 key={i}
                 onClick={() => set('emoji', emoji)}
-                className={`w-9 h-9 rounded-lg text-xl flex items-center justify-center transition-colors ${
+                className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
                   form.emoji === emoji
                     ? 'bg-orange-100 ring-2 ring-[var(--primary)]'
                     : 'hover:bg-gray-100'
                 }`}
               >
-                {emoji}
+                <EmojiDisplay emoji={emoji} size={24} />
               </button>
             ))}
           </div>
